@@ -1,40 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Virtual Keyboard</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap');
+
+  :root {
+    --bg: #14161f;
+    --panel: #1c1f2b;
+    --keycap: #262a38;
+    --keycap-top: #2f3444;
+    --keycap-active: #3a4157;
+    --accent: #ffb454;
+    --accent-dim: #7a5c2e;
+    --text: #e8e6e0;
+    --text-dim: #8b8fa3;
+    --glow: rgba(255, 180, 84, 0.35);
+  }
+
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%;
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    overscroll-behavior: none;
+  }
+
+  body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100dvh;
+    padding: clamp(10px, 3vw, 28px);
+    gap: clamp(10px, 2vw, 18px);
+  }
+
+  .app {
+    width: 100%;
+    max-width: 900px;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(10px, 2vw, 16px);
+  }
+
+  .screen-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: clamp(10px, 1.4vw, 12px);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .screen-label .dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 8px var(--glow);
+    display: inline-block;
+    margin-right: 6px;
+  }
+
+  #output {
+    width: 100%;
+    min-height: clamp(90px, 18vw, 150px);
+    background: var(--panel);
+    color: var(--text);
+    border: 1px solid #2a2e3c;
+    border-radius: 12px;
+    padding: clamp(12px, 2.4vw, 20px);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: clamp(14px, 2.2vw, 18px);
+    line-height: 1.6;
+    resize: none;
+    outline: none;
+    caret-color: var(--accent);
+    box-shadow: inset 0 2px 8px rgba(0,0,0,0.35);
+  }
+
+  #output::placeholder { color: var(--text-dim); }
+
+  #keyboard {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(5px, 1vw, 8px);
+    background: var(--panel);
+    padding: clamp(8px, 1.6vw, 14px);
+    border-radius: 14px;
+    border: 1px solid #2a2e3c;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+  }
+
+  .keyboard-row {
+    display: flex;
+    gap: clamp(4px, 0.8vw, 7px);
+  }
+
+  .key {
+    flex: 1;
+    min-width: 0;
+    background: linear-gradient(180deg, var(--keycap-top), var(--keycap));
+    color: var(--text);
+    border: none;
+    border-bottom: 3px solid #10121a;
+    border-radius: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 500;
+    font-size: clamp(11px, 2vw, 16px);
+    padding: clamp(9px, 2vw, 15px) 2px;
+    cursor: pointer;
+    transition: transform 0.06s ease, background 0.06s ease, border-color 0.06s ease;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .key.key-wide { flex: 1.6; }
+  .key.key-space { flex: 6; }
+
+  .key.active,
+  .key.shift-locked {
+    background: linear-gradient(180deg, var(--accent), #d99340);
+    color: #1a1206;
+    border-bottom-color: var(--accent-dim);
+  }
+
+  .key.pressed-highlight,
+  .key:active {
+    transform: translateY(2px);
+    border-bottom-width: 1px;
+    background: var(--keycap-active);
+  }
+
+  .hint {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: clamp(10px, 1.3vw, 12px);
+    color: var(--text-dim);
+    text-align: center;
+  }
+
+  /* Small phone tuning */
+  @media (max-width: 420px) {
+    .key { border-radius: 6px; border-bottom-width: 2px; }
+    #keyboard { border-radius: 10px; }
+  }
+</style>
+</head>
+<body>
+  <div class="app">
+    <div class="screen-label"><span><span class="dot"></span>INPUT</span><span id="modeLabel">QWERTY</span></div>
+    <textarea id="output" placeholder="Start typing…" spellcheck="false"></textarea>
+    <div id="keyboard"></div>
+    <div class="hint">Hold ⌫ to repeat-delete · swipe the space bar left/right to move the cursor</div>
+  </div>
+
+<script>
 // ============================================================
 // Virtual Keyboard Application
 // A fully interactive on-screen keyboard with QWERTY layout,
-// emoji support, shift/caps lock, and hardware key mirroring.
+// emoji support, shift/caps lock, hardware key mirroring,
+// and touch/gesture support for phones and tablets.
 // ============================================================
 
 // --- DOM References ---
-const output = document.getElementById("output");       // The text area where typed characters appear
-const keyboard = document.getElementById("keyboard");   // The container element for the virtual keyboard
+const output = document.getElementById("output");
+const keyboard = document.getElementById("keyboard");
+const modeLabel = document.getElementById("modeLabel");
 
 // --- Keyboard State Flags ---
-let isShift = false;            // Whether Shift is temporarily active (single press)
-let isShiftLocked = false;      // Whether Shift is locked on (double-click activates lock)
-let isCaps = false;             // Whether Caps Lock is toggled on
-let currentLayoutMode = "qwerty"; // Current layout: "qwerty" for letters or "emoji" for emoji picker
+let isShift = false;
+let isShiftLocked = false;
+let isCaps = false;
+let currentLayoutMode = "qwerty"; // "qwerty" or "emoji"
 
 // --- Audio & Timing State ---
-let audioCtx = null;            // Web Audio API context for key click sounds (lazy-initialized)
-let lastShiftClickTime = 0;     // Timestamp of last Shift press, used to detect double-click for lock
-let emojiPageIndex = 0;         // Which page of the emoji grid is currently displayed (0-2)
+let audioCtx = null;
+let lastShiftClickTime = 0;
+let emojiPageIndex = 0;
+
+// --- Backspace long-press repeat state ---
+let backspaceRepeatTimeout = null;
+let backspaceRepeatInterval = null;
+
+// --- Spacebar swipe-to-move-cursor gesture state ---
+let spaceSwipeActive = false;
+let spaceSwipeStartX = 0;
+let spaceSwipeLastStepX = 0;
+const SWIPE_STEP_PX = 18; // px of drag per single character move
 
 // ============================================================
 // LAYOUT DEFINITIONS
 // ============================================================
 
-// Standard QWERTY keyboard layout organized by row.
-// Each sub-array represents one horizontal row of keys.
+// Standard QWERTY layout. Only ONE delete/backspace key now exists,
+// living at the end of the top row (previously "Delete"'s slot).
 const qwertyLayout = [
-    ["`", "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "-", "=", "Delete"],
+    ["`", "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "-", "=", "Backspace"],
     ["Tab", "q", "w", "e", "r", "t", "y", "u", "i", "o", "p", "[", "]", "\\"],
     ["Caps", "a", "s", "d", "f", "g", "h", "j", "k", "l", ";", "'", "Enter"],
     ["Shift", "z", "x", "c", "v", "b", "n", "m", ",", ".", "/", "Shift"],
-    ["😀", "Space", "Backspace"]  // Bottom row: emoji toggle, spacebar, backspace
+    ["😀", "Space"]  // Bottom row: emoji toggle + spacebar only
 ];
 
-// 3-page emoji library. Each page contains 4 rows of 10 emojis.
-// Page 0: Faces/expressions, Page 1: Hands/hearts, Page 2: Animals
+// 3-page emoji library.
 const emojiPages = [
     [
         ["😀", "😃", "😄", "😁", "😆", "😅", "😂", "🤣", "😊", "😇"],
@@ -56,16 +234,15 @@ const emojiPages = [
     ]
 ];
 
-// Maps base characters to their Shift-modified equivalents (symbols on number row, etc.)
+// Shift-modified symbols for the number row / punctuation.
 const shiftReplacements = {
     "`": "~", "1": "!", "2": "@", "3": "#", "4": "$", "5": "%", "6": "^", "7": "&", "8": "*", "9": "(", "0": ")", "-": "_", "=": "+",
     "[": "{", "]": "}", "\\": "|", ";": ":", "'": '"', ",": "<", ".": ">", "/": "?"
 };
 
-// Maps physical keyboard event keys to virtual keyboard button identifiers.
-// This allows highlighting the correct on-screen key when a hardware key is pressed.
+// Physical keyboard key → virtual key identifier.
 const hardwareKeyMap = {
-    "escape": "ABC", "backspace": "Backspace", "delete": "Delete", "tab": "Tab",
+    "escape": "ABC", "backspace": "Backspace", "delete": "Backspace", "tab": "Tab",
     "enter": "Enter", "capslock": "Caps", "shift": "Shift", " ": "Space"
 };
 
@@ -73,49 +250,41 @@ const hardwareKeyMap = {
 // KEYBOARD RENDERING
 // ============================================================
 
-/**
- * Builds and renders the entire virtual keyboard into the DOM.
- * Chooses between QWERTY layout and emoji grid based on currentLayoutMode.
- * Called initially and whenever the layout or modifier state changes.
- */
 function createKeyboard() {
-    keyboard.innerHTML = ""; // Clear existing keyboard
+    keyboard.innerHTML = "";
 
-    // Determine which layout to render
     let activeLayout = [];
     if (currentLayoutMode === "qwerty") {
         activeLayout = qwertyLayout;
+        modeLabel.textContent = "QWERTY";
     } else {
-        // In emoji mode, show current emoji page plus a navigation/control row
         activeLayout = [...emojiPages[emojiPageIndex]];
-        activeLayout.push(["ABC", "◀", "▶", "Space", "Backspace"]); // Navigation row
+        activeLayout.push(["ABC", "◀", "▶", "Space", "Backspace"]);
+        modeLabel.textContent = "EMOJI " + (emojiPageIndex + 1) + "/" + emojiPages.length;
     }
 
-    // Build each row of keys
     activeLayout.forEach(row => {
         const rowDiv = document.createElement("div");
         rowDiv.classList.add("keyboard-row");
 
         row.forEach(key => {
             const button = document.createElement("button");
+            button.type = "button";
             button.classList.add("key");
-            button.textContent = getVisualText(key);  // Display text respects shift/caps state
-            button.setAttribute("data-key", key.toLowerCase()); // Used for hardware key matching
+            button.textContent = getVisualText(key);
+            button.setAttribute("data-key", key.toLowerCase());
 
-            // Apply visual state indicators for modifier keys
             if (key === "Caps" && isCaps) button.classList.add("active");
             if (key === "Shift" && isShiftLocked) button.classList.add("shift-locked");
             if (key === "Shift" && isShift && !isShiftLocked) button.classList.add("active");
 
-            // Apply wider styling to special/functional keys
-            if (["Backspace", "Delete", "Tab", "Caps", "Enter", "Shift", "ABC", "◀", "▶"].includes(key) || (key === "😀" && currentLayoutMode === "qwerty")) {
+            if (["Backspace", "Tab", "Caps", "Enter", "Shift", "ABC", "◀", "▶"].includes(key) || (key === "😀" && currentLayoutMode === "qwerty")) {
                 button.classList.add("key-wide");
             } else if (key === "Space") {
-                button.classList.add("key-space"); // Extra-wide spacebar
+                button.classList.add("key-space");
             }
 
-            // Attach click handler for this key
-            button.addEventListener("click", () => handleKeyPress(key));
+            attachKeyGestures(button, key);
             rowDiv.appendChild(button);
         });
 
@@ -127,33 +296,22 @@ function createKeyboard() {
 // VISUAL TEXT LOGIC
 // ============================================================
 
-/**
- * Determines what text to display on a key button, accounting for
- * Shift, Shift Lock, and Caps Lock states.
- *
- * @param {string} key - The base key identifier
- * @returns {string} - The character/label to display on the key
- */
 function getVisualText(key) {
-    // Special keys always display their label as-is
-    if (["Backspace", "Delete", "Tab", "Caps", "Enter", "Shift", "Space", "ABC", "😀", "◀", "▶"].includes(key)) {
+    if (["Backspace", "Tab", "Caps", "Enter", "Shift", "Space", "ABC", "😀", "◀", "▶"].includes(key)) {
+        if (key === "Backspace") return "⌫";
+        if (key === "Space") return "␣";
         return key;
     }
 
-    // When Shift or Shift Lock is active:
     if (isShift || isShiftLocked) {
-        // If key has a symbol replacement (e.g., 1 → !), use it
         if (shiftReplacements[key]) return shiftReplacements[key];
-        // For letters: Shift + Caps = lowercase (they cancel out), Shift alone = uppercase
         return isCaps ? key.toLowerCase() : key.toUpperCase();
     }
 
-    // When only Caps Lock is active, uppercase letters only
     if (isCaps && key.match(/^[a-z]$/i)) {
         return key.toUpperCase();
     }
 
-    // Default: show lowercase
     return key.toLowerCase();
 }
 
@@ -161,36 +319,26 @@ function getVisualText(key) {
 // AUDIO FEEDBACK
 // ============================================================
 
-/**
- * Plays a short click sound using the Web Audio API.
- * Creates a brief triangle-wave oscillator that sweeps from 600Hz to 150Hz
- * over 40ms, simulating a tactile key click.
- */
 function playClickSound() {
     try {
-        // Lazily initialize the audio context on first use
         if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        // Resume if browser suspended it (autoplay policy)
         if (audioCtx.state === "suspended") audioCtx.resume();
 
         const osc = audioCtx.createOscillator();
         const gainNode = audioCtx.createGain();
 
-        // Configure a short descending tone for a "click" feel
         osc.type = "triangle";
         osc.frequency.setValueAtTime(600, audioCtx.currentTime);
         osc.frequency.exponentialRampToValueAtTime(150, audioCtx.currentTime + 0.04);
 
-        // Quick fade-out to avoid audio pops
         gainNode.gain.setValueAtTime(0.15, audioCtx.currentTime);
         gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
 
-        // Connect audio graph: oscillator → gain → speakers
         osc.connect(gainNode);
         gainNode.connect(audioCtx.destination);
 
         osc.start();
-        osc.stop(audioCtx.currentTime + 0.05); // Auto-stop after 50ms
+        osc.stop(audioCtx.currentTime + 0.05);
     } catch (e) {
         console.log("Audio dropped: ", e);
     }
@@ -200,75 +348,96 @@ function playClickSound() {
 // SHIFT / SHIFT LOCK LOGIC
 // ============================================================
 
-/**
- * Handles Shift key behavior with double-click detection:
- * - Single click: toggles temporary Shift (active for one keystroke)
- * - Double click (within 300ms): activates Shift Lock (persistent uppercase)
- * - Click while locked: deactivates Shift Lock
- */
 function triggerShiftToggle() {
     const currentTime = Date.now();
     const timeDifference = currentTime - lastShiftClickTime;
 
     if (timeDifference < 300) {
-        // Double-click detected → enable Shift Lock
         isShiftLocked = true;
         isShift = false;
     } else {
         if (isShiftLocked) {
-            // Already locked → unlock both
             isShiftLocked = false;
             isShift = false;
         } else {
-            // Normal toggle of temporary Shift
             isShift = !isShift;
         }
     }
     lastShiftClickTime = currentTime;
-    createKeyboard(); // Re-render to reflect new state
+    createKeyboard();
 }
 
 // ============================================================
-// KEY PRESS HANDLER (Core Logic)
+// DELETE HELPER (shared by tap + long-press repeat)
 // ============================================================
 
-/**
- * Main handler for all virtual key presses. Routes each key to its
- * appropriate action: inserting characters, navigating emoji pages,
- * toggling modifiers, or deleting text.
- *
- * Maintains cursor position in the output textarea after each action.
- *
- * @param {string} key - The key identifier that was pressed
- */
-function handleKeyPress(key) {
-    playClickSound(); // Audible feedback on every keypress
-
-    // Capture current cursor/selection state in the output textarea
+function deleteOneCharacterBeforeCursor() {
     const startPos = output.selectionStart;
     const endPos = output.selectionEnd;
     const textValue = output.value;
 
-    // Split text around the current selection for easy manipulation
-    let textBefore = textValue.substring(0, startPos);  // Text before cursor/selection
-    let textAfter = textValue.substring(endPos);         // Text after cursor/selection
-    let newCursorPos = startPos;                         // Where cursor should end up
+    let textBefore = textValue.substring(0, startPos);
+    let textAfter = textValue.substring(endPos);
+    let newCursorPos = startPos;
+
+    if (startPos !== endPos) {
+        output.value = textBefore + textAfter;
+        newCursorPos = startPos;
+    } else if (startPos > 0) {
+        const leftArray = Array.from(textBefore);
+        leftArray.pop();
+        textBefore = leftArray.join("");
+        output.value = textBefore + textAfter;
+        newCursorPos = textBefore.length;
+    }
+
+    output.focus();
+    output.setSelectionRange(newCursorPos, newCursorPos);
+}
+
+function startBackspaceRepeat() {
+    stopBackspaceRepeat();
+    // Small initial delay before repeat kicks in, like a physical key.
+    backspaceRepeatTimeout = setTimeout(() => {
+        backspaceRepeatInterval = setInterval(() => {
+            deleteOneCharacterBeforeCursor();
+            playClickSound();
+        }, 60);
+    }, 350);
+}
+
+function stopBackspaceRepeat() {
+    clearTimeout(backspaceRepeatTimeout);
+    clearInterval(backspaceRepeatInterval);
+    backspaceRepeatTimeout = null;
+    backspaceRepeatInterval = null;
+}
+
+// ============================================================
+// KEY PRESS HANDLER (Core Logic — fires on tap / click release)
+// ============================================================
+
+function handleKeyPress(key) {
+    playClickSound();
+
+    const startPos = output.selectionStart;
+    const endPos = output.selectionEnd;
+    const textValue = output.value;
+
+    let textBefore = textValue.substring(0, startPos);
+    let textAfter = textValue.substring(endPos);
+    let newCursorPos = startPos;
 
     switch (key) {
-        // --- Layout Switching ---
         case "ABC":
-            // Switch back to QWERTY from emoji mode
             currentLayoutMode = "qwerty";
             createKeyboard();
             break;
 
         case "😀":
-            // Context-dependent behavior:
-            // In QWERTY mode → switch to emoji picker
-            // In emoji mode → insert the 😀 character itself
             if (currentLayoutMode === "qwerty") {
                 currentLayoutMode = "emoji";
-                emojiPageIndex = 0; // Always start on first emoji page
+                emojiPageIndex = 0;
                 createKeyboard();
             } else {
                 output.value = textBefore + key + textAfter;
@@ -276,52 +445,21 @@ function handleKeyPress(key) {
             }
             break;
 
-        // --- Emoji Page Navigation ---
         case "◀":
-            // Go to previous emoji page (wraps around to last page)
             emojiPageIndex = (emojiPageIndex - 1 + emojiPages.length) % emojiPages.length;
             createKeyboard();
             break;
 
         case "▶":
-            // Go to next emoji page (wraps around to first page)
             emojiPageIndex = (emojiPageIndex + 1) % emojiPages.length;
             createKeyboard();
             break;
 
-        // --- Deletion Keys ---
         case "Backspace":
-            if (startPos !== endPos) {
-                // Text is selected → delete the selection
-                output.value = textBefore + textAfter;
-            } else if (startPos > 0) {
-                // No selection → delete one character before cursor
-                // Uses Array.from() to correctly handle multi-byte chars (emojis)
-                const leftArray = Array.from(textBefore);
-                leftArray.pop();
-                textBefore = leftArray.join("");
-                output.value = textBefore + textAfter;
-                newCursorPos = textBefore.length;
-            }
-            break;
+            deleteOneCharacterBeforeCursor();
+            return; // deleteOneCharacterBeforeCursor already manages focus/cursor
 
-        case "Delete":
-            if (startPos !== endPos) {
-                // Text is selected → delete the selection
-                output.value = textBefore + textAfter;
-            } else if (startPos < textValue.length) {
-                // No selection → delete one character after cursor
-                // Uses Array.from() to correctly handle multi-byte chars (emojis)
-                const rightArray = Array.from(textAfter);
-                rightArray.shift();
-                textAfter = rightArray.join("");
-                output.value = textBefore + textAfter;
-            }
-            break;
-
-        // --- Whitespace & Control Keys ---
         case "Tab":
-            // Insert 4 spaces (soft tab)
             output.value = textBefore + "    " + textAfter;
             newCursorPos += 4;
             break;
@@ -334,29 +472,23 @@ function handleKeyPress(key) {
             newCursorPos += 1;
             break;
 
-        // --- Modifier Toggles ---
         case "Caps":
             isCaps = !isCaps;
-            createKeyboard(); // Re-render to show updated key labels
+            createKeyboard();
             break;
         case "Shift":
             triggerShiftToggle();
             break;
 
-        // --- Character Insertion (default case) ---
         default:
             let insertedChar = "";
             if (currentLayoutMode === "emoji") {
-                // In emoji mode, keys are emoji characters — insert directly
                 insertedChar = key;
             } else {
-                // In QWERTY mode, apply shift/caps transformations
                 if (isShift || isShiftLocked) {
-                    // Use symbol replacement if available, otherwise toggle case
                     insertedChar = shiftReplacements[key] || (isCaps ? key.toLowerCase() : key.toUpperCase());
-                    // Single-use Shift deactivates after one character (Shift Lock persists)
                     if (!isShiftLocked) isShift = false;
-                    createKeyboard(); // Re-render to show shift deactivated
+                    createKeyboard();
                 } else if (isCaps && key.match(/^[a-z]$/i)) {
                     insertedChar = key.toUpperCase();
                 } else {
@@ -364,48 +496,116 @@ function handleKeyPress(key) {
                 }
             }
 
-            // Insert the determined character at cursor position
             output.value = textBefore + insertedChar + textAfter;
             newCursorPos += insertedChar.length;
             break;
     }
 
-    // Restore focus and set cursor to the correct position after text manipulation
     output.focus();
     output.setSelectionRange(newCursorPos, newCursorPos);
 }
 
 // ============================================================
+// GESTURE HANDLING (mouse + touch + pen, unified via Pointer Events)
+// ============================================================
+
+/**
+ * Attaches unified pointer-based gestures to a key button so that
+ * taps feel instant on touchscreens (no 300ms click delay), the
+ * Backspace key supports press-and-hold repeat delete, and the
+ * Space key supports a left/right swipe to move the text cursor
+ * (the same gesture used by iOS/Android keyboards).
+ */
+function attachKeyGestures(button, key) {
+    button.addEventListener("pointerdown", (e) => {
+        e.preventDefault();
+        button.setPointerCapture(e.pointerId);
+        button.classList.add("pressed-highlight");
+
+        if (key === "Backspace") {
+            deleteOneCharacterBeforeCursor();
+            playClickSound();
+            startBackspaceRepeat();
+        } else if (key === "Space") {
+            spaceSwipeActive = true;
+            spaceSwipeStartX = e.clientX;
+            spaceSwipeLastStepX = e.clientX;
+        }
+    });
+
+    button.addEventListener("pointermove", (e) => {
+        if (key === "Space" && spaceSwipeActive) {
+            const delta = e.clientX - spaceSwipeLastStepX;
+            if (Math.abs(delta) >= SWIPE_STEP_PX) {
+                const steps = Math.trunc(delta / SWIPE_STEP_PX);
+                moveCursorBy(steps);
+                spaceSwipeLastStepX += steps * SWIPE_STEP_PX;
+            }
+        }
+    });
+
+    const release = (e) => {
+        button.classList.remove("pressed-highlight");
+
+        if (key === "Backspace") {
+            stopBackspaceRepeat();
+        } else if (key === "Space") {
+            const totalDrag = Math.abs(e.clientX - spaceSwipeStartX);
+            spaceSwipeActive = false;
+            // Only insert a space if this was a tap, not a cursor-moving swipe.
+            if (totalDrag < SWIPE_STEP_PX) {
+                handleKeyPress(key);
+            }
+        } else {
+            handleKeyPress(key);
+        }
+    };
+
+    button.addEventListener("pointerup", release);
+    button.addEventListener("pointercancel", () => {
+        button.classList.remove("pressed-highlight");
+        stopBackspaceRepeat();
+        spaceSwipeActive = false;
+    });
+    button.addEventListener("pointerleave", () => {
+        // Keep repeat/swipe active even if the pointer drifts slightly off
+        // the key while held, matching mobile keyboard behavior.
+    });
+}
+
+function moveCursorBy(steps) {
+    const len = output.value.length;
+    let pos = output.selectionStart + steps;
+    pos = Math.max(0, Math.min(len, pos));
+    output.focus();
+    output.setSelectionRange(pos, pos);
+    playClickSound();
+}
+
+// ============================================================
 // HARDWARE KEYBOARD EVENT LISTENERS
-// These mirror physical key presses onto the virtual keyboard,
-// providing visual feedback (highlight) and audio on real keystrokes.
 // ============================================================
 
 document.addEventListener("keydown", (e) => {
-    // Map the hardware key to its virtual keyboard equivalent
     const lookupKey = hardwareKeyMap[e.key.toLowerCase()] || e.key.toLowerCase();
     const targetButton = document.querySelector(`.key[data-key="${lookupKey}"]`);
 
-    // Highlight the corresponding on-screen key and play click sound
     if (targetButton) {
         targetButton.classList.add("pressed-highlight");
         playClickSound();
     }
 
-    // Sync Caps Lock state with the actual hardware toggle
     if (e.key === "CapsLock") {
         isCaps = e.getModifierState("CapsLock");
         createKeyboard();
     }
 
-    // Sync Shift state with hardware Shift press
     if (e.key === "Shift") {
         triggerShiftToggle();
     }
 });
 
 document.addEventListener("keyup", (e) => {
-    // Remove the highlight when the physical key is released
     const lookupKey = hardwareKeyMap[e.key.toLowerCase()] || e.key.toLowerCase();
     const targetButton = document.querySelector(`.key[data-key="${lookupKey}"]`);
 
@@ -416,6 +616,8 @@ document.addEventListener("keyup", (e) => {
 
 // ============================================================
 // INITIALIZATION
-// Render the keyboard on page load
 // ============================================================
 createKeyboard();
+</script>
+</body>
+</html>
