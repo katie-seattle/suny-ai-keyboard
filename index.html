@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>Gesture Emoji Keyboard</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f2f2f7; color: #000; display: flex; justify-content: center; padding: 20px 10px; }
+    .app-container { width: 100%; max-width: 500px; display: flex; flex-direction: column; gap: 12px; }
+    h1 { font-size: 1.2rem; text-align: center; color: #333; }
+    #text-box { width: 100%; height: 100px; font-size: 1.1rem; padding: 12px; border: 1px solid #d1d1d6; border-radius: 10px; resize: none; outline: none; background: #fff; }
+    
+    /* Keyboard Container */
+    .keyboard-container { background: #d1d5db; border-radius: 12px; padding: 8px 4px; display: flex; flex-direction: column; gap: 8px; touch-action: none; width: 100%; }
+    .keyboard-panel { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+    
+    /* ROW FLEXBOX: Key fix to prevent long columns */
+    .keyboard-row { display: flex !important; flex-direction: row !important; justify-content: center; gap: 4px; width: 100%; }
+    
+    .key { flex: 1; height: 46px; font-size: 1.1rem; font-weight: 500; border: none; border-radius: 5px; background: #ffffff; color: #000; box-shadow: 0 1px 2px rgba(0,0,0,0.2); cursor: pointer; touch-action: manipulation; user-select: none; display: flex; align-items: center; justify-content: center; min-width: 0; }
+    .key:active, .special-key:active { background: #b0b5bd; }
+    
+    .special-key { height: 46px; font-size: 0.9rem; font-weight: 500; border: none; border-radius: 5px; background: #acb3bd; color: #000; box-shadow: 0 1px 2px rgba(0,0,0,0.2); cursor: pointer; touch-action: manipulation; user-select: none; display: flex; align-items: center; justify-content: center; }
+    .action-key { flex: 1.5; }
+    
+    /* Bottom Controls */
+    .bottom-row { display: flex !important; flex-direction: row !important; gap: 4px; width: 100%; }
+    .mode-key { flex: 1.5; font-size: 1.1rem; }
+    .space-key { flex: 5; background: #ffffff; }
+    .return-key { flex: 2; background: #acb3bd; }
+    
+    /* Emoji Section */
+    .emoji-section { display: none; flex-direction: column; gap: 8px; }
+    .category-header { display: flex; justify-content: space-between; align-items: center; background: #e5e7eb; padding: 6px 10px; border-radius: 6px; }
+    .category-title { font-weight: 600; font-size: 0.85rem; }
+    .nav-arrow { background: #3b82f6; color: #fff; border: none; border-radius: 4px; padding: 4px 10px; font-size: 0.8rem; cursor: pointer; }
+    .emoji-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; }
+    .emoji-key { height: 46px; font-size: 1.2rem; }
+  </style>
+  <script src="app.js" defer></script>
+</head>
+<body>
+
+  <main class="app-container">
+    <h1>Gesture Emoji Keyboard</h1>
+    
+    <textarea id="text-box" placeholder="Tap keys or swipe left to delete..."></textarea>
+
+    <div class="keyboard-container" id="keyboard-area">
+      
+      <div id="letters-panel" class="keyboard-panel">
+        <div class="keyboard-row" id="row-1"></div>
+        <div class="keyboard-row" id="row-2"></div>
+        <div class="keyboard-row" id="row-3"></div>
+      </div>
+
+      <div id="emoji-section" class="keyboard-panel emoji-section">
+        <div class="category-header">
+          <button type="button" id="prev-category-btn" class="nav-arrow">◄</button>
+          <span id="category-title" class="category-title">Smileys</span>
+          <button type="button" id="next-category-btn" class="nav-arrow">►</button>
+        </div>
+        <div id="emoji-panel" class="emoji-grid"></div>
+      </div>
+
+      <div class="bottom-row">
+        <button type="button" id="toggle-btn" class="special-key mode-key">😀</button>
+        <button type="button" id="space-btn" class="special-key space-key">space</button>
+        <button type="button" id="return-btn" class="special-key return-key">return</button>
+      </div>
+
+    </div>
+  </main>
+
+</body>
+</html>
