@@ -1,0 +1,136 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background-color: #f4f4f9;
+  color: #333;
+  display: flex;
+  justify-content: center;
+  padding: 20px;
+}
+
+.app-container {
+  width: 100%;
+  max-width: 500px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+h1 {
+  font-size: 1.4rem;
+  text-align: center;
+}
+
+#text-box {
+  width: 100%;
+  height: 120px;
+  font-size: 1.1rem;
+  padding: 12px;
+  border: 2px solid #ccc;
+  border-radius: 10px;
+  resize: none;
+  outline: none;
+}
+
+.keyboard-container {
+  background: #ffffff;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  touch-action: none; /* Prevents default browser scrolling during gestures */
+}
+
+.grid {
+  display: grid;
+  gap: 6px;
+}
+
+.letters-grid {
+  grid-template-columns: repeat(10, 1fr);
+}
+
+.emoji-section {
+  display: none; /* Hidden until emoji toggle is clicked */
+  flex-direction: column;
+  gap: 10px;
+}
+
+.category-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f0f0f5;
+  padding: 6px 12px;
+  border-radius: 8px;
+}
+
+.category-title {
+  font-weight: bold;
+  font-size: 0.95rem;
+}
+
+.nav-arrow {
+  background: #007aff;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 14px;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.nav-arrow:active {
+  opacity: 0.7;
+}
+
+.emoji-grid {
+  grid-template-columns: repeat(6, 1fr);
+}
+
+.key {
+  padding: 14px 0;
+  font-size: 1rem;
+  font-weight: bold;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  background: #f9f9f9;
+  cursor: pointer;
+  touch-action: manipulation;
+  user-select: none;
+}
+
+.key:active {
+  background: #e2e2e2;
+}
+
+.controls {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.control-btn {
+  flex: 1;
+  padding: 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 6px;
+  background: #007aff;
+  color: #ffffff;
+  cursor: pointer;
+}
+
+.action-btn {
+  background: #ff3b30;
+}
+
+.control-btn:active {
+  opacity: 0.8;
+}
