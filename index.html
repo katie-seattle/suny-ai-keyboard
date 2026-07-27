@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>Gesture Emoji Keyboard</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="app.js" defer></script>
+</head>
+<body>
+
+  <main class="app-container">
+    <h1>Gesture Emoji Keyboard</h1>
+    
+    <textarea id="text-box" placeholder="Tap keys or swipe left to delete..."></textarea>
+
+    <div class="keyboard-container" id="keyboard-area">
+      
+      <div id="letters-panel" class="keyboard-panel">
+        <div class="keyboard-row" id="row-1"></div>
+        <div class="keyboard-row" id="row-2"></div>
+        <div class="keyboard-row" id="row-3"></div>
+      </div>
+
+      <div id="emoji-section" class="keyboard-panel emoji-section">
+        <div class="category-header">
+          <button type="button" id="prev-category-btn" class="nav-arrow">◄</button>
+          <span id="category-title" class="category-title">Smileys</span>
+          <button type="button" id="next-category-btn" class="nav-arrow">►</button>
+        </div>
+        <div id="emoji-panel" class="grid emoji-grid"></div>
+      </div>
+
+      <div class="bottom-row">
+        <button type="button" id="toggle-btn" class="special-key mode-key">😀</button>
+        <button type="button" id="space-btn" class="special-key space-key">space</button>
+        <button type="button" id="return-btn" class="special-key return-key">return</button>
+      </div>
+
+    </div>
+  </main>
+
+</body>
+</html>
